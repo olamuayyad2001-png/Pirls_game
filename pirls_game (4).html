@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة ترتيب الكلمات - معرض بيرلز</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .school-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .exhibition-name {
+            font-size: 20px;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            font-size: 18px;
+            color: #4a5568;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+
+        .drop-zone {
+            min-height: 120px;
+            border: 3px dashed #cbd5e0;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            background: #f7fafc;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #667eea;
+            background: #edf2f7;
+        }
+
+        .words-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            min-height: 100px;
+        }
+
+        .word {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            cursor: move;
+            font-size: 18px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .word:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .word.dragging {
+            opacity: 0.5;
+        }
+
+        .word.in-zone {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            cursor: default;
+        }
+
+        .celebration {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .celebration.active {
+            display: flex;
+        }
+
+        .celebration-content {
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .celebration-message {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .fireworks {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .firework {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            animation: explode 1s ease-out infinite;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: translate(0, 0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--x), var(--y));
+                opacity: 0;
+            }
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .school-name {
+                font-size: 18px;
+            }
+
+            .exhibition-name {
+                font-size: 16px;
+            }
+
+            .instructions {
+                font-size: 16px;
+            }
+
+            .word {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+
+            .celebration-content {
+                padding: 30px;
+            }
+
+            .celebration-message {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="school-name">مدرسة الملكة رانيا العبد الله الثانوية للبنات</div>
+            <div class="exhibition-name">معرض اختبار بيرْلْز</div>
+        </div>
+
+        <div class="instructions">
+            رتب الكلمات لتكوين الجملة الصحيحة
+        </div>
+
+        <div class="drop-zone" id="dropZone">
+            <span style="color: #a0aec0; font-size: 18px;">اسحب الكلمات هنا</span>
+        </div>
+
+        <div class="words-container" id="wordsContainer"></div>
+    </div>
+
+    <div class="celebration" id="celebration">
+        <div class="fireworks" id="fireworks"></div>
+        <div class="celebration-content">
+            <div class="celebration-message">
+                🎉 أحسنت! 🎉<br><br>
+                أهلا وسهلا بكم في معرض اختبار بيرْلْز
+            </div>
+            <button class="reset-btn" onclick="resetGame()">إعادة المحاولة</button>
+        </div>
+    </div>
+
+    <div class="celebration" id="wrongAnswer">
+        <div class="celebration-content">
+            <div class="celebration-message" style="color: #e53e3e;">
+                ❌ حاول مرة أخرى ❌<br><br>
+                الترتيب غير صحيح
+            </div>
+            <button class="reset-btn" onclick="resetGame()">إعادة المحاولة</button>
+        </div>
+    </div>
+
+    <script>
+        const correctSentence = "بيرْلْز يقيس مهارات الفهم والتحليل في القراءة";
+        const words = correctSentence.split(" ");
+        let shuffledWords = [];
+        let droppedWords = [];
+        let draggedElement = null;
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function initGame() {
+            shuffledWords = shuffleArray(words);
+            droppedWords = [];
+            renderWords();
+        }
+
+        function renderWords() {
+            const container = document.getElementById('wordsContainer');
+            container.innerHTML = '';
+            
+            shuffledWords.forEach((word, index) => {
+                const wordEl = document.createElement('div');
+                wordEl.className = 'word';
+                wordEl.textContent = word;
+                wordEl.draggable = true;
+                wordEl.dataset.word = word;
+                wordEl.dataset.index = index;
+
+                // Mouse events
+                wordEl.addEventListener('dragstart', handleDragStart);
+                wordEl.addEventListener('dragend', handleDragEnd);
+
+                // Touch events
+                wordEl.addEventListener('touchstart', handleTouchStart);
+                wordEl.addEventListener('touchmove', handleTouchMove);
+                wordEl.addEventListener('touchend', handleTouchEnd);
+
+                container.appendChild(wordEl);
+            });
+        }
+
+        // Mouse drag handlers
+        function handleDragStart(e) {
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        // Touch handlers
+        function handleTouchStart(e) {
+            draggedElement = e.target;
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            e.target.style.opacity = '0.5';
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+        }
+
+        function handleTouchEnd(e) {
+            if (!draggedElement) return;
+            
+            draggedElement.style.opacity = '1';
+            const touch = e.changedTouches[0];
+            const dropZone = document.getElementById('dropZone');
+            const rect = dropZone.getBoundingClientRect();
+            
+            if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                handleDrop();
+            }
+            
+            draggedElement = null;
+        }
+
+        const dropZone = document.getElementById('dropZone');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            handleDrop();
+        });
+
+        function handleDrop() {
+            if (!draggedElement) return;
+
+            const word = draggedElement.dataset.word;
+            const index = parseInt(draggedElement.dataset.index);
+
+            droppedWords.push(word);
+            shuffledWords.splice(index, 1);
+
+            updateDropZone();
+            renderWords();
+
+            if (shuffledWords.length === 0) {
+                checkAnswer();
+            }
+
+            draggedElement = null;
+        }
+
+        function updateDropZone() {
+            const dropZone = document.getElementById('dropZone');
+            dropZone.innerHTML = '';
+
+            if (droppedWords.length === 0) {
+                const placeholder = document.createElement('span');
+                placeholder.style.color = '#a0aec0';
+                placeholder.style.fontSize = '18px';
+                placeholder.textContent = 'اسحب الكلمات هنا';
+                dropZone.appendChild(placeholder);
+            } else {
+                droppedWords.forEach(word => {
+                    const wordEl = document.createElement('div');
+                    wordEl.className = 'word in-zone';
+                    wordEl.textContent = word;
+                    dropZone.appendChild(wordEl);
+                });
+            }
+        }
+
+        function checkAnswer() {
+            const userSentence = droppedWords.join(" ");
+            
+            if (userSentence === correctSentence) {
+                setTimeout(() => {
+                    celebrate();
+                }, 500);
+            } else {
+                setTimeout(() => {
+                    showWrongAnswer();
+                }, 500);
+            }
+        }
+
+        function showWrongAnswer() {
+            const wrongAnswer = document.getElementById('wrongAnswer');
+            wrongAnswer.classList.add('active');
+        }
+
+        function celebrate() {
+            const celebration = document.getElementById('celebration');
+            celebration.classList.add('active');
+
+            // Create fireworks
+            createFireworks();
+
+            // Play applause sound
+            playApplause();
+
+            // Speak welcome message
+            speakMessage();
+        }
+
+        function createFireworks() {
+            const fireworksContainer = document.getElementById('fireworks');
+            fireworksContainer.innerHTML = '';
+
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const firework = document.createElement('div');
+                    firework.className = 'firework';
+                    firework.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    firework.style.left = Math.random() * 100 + '%';
+                    firework.style.top = Math.random() * 100 + '%';
+                    
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = 50 + Math.random() * 100;
+                    firework.style.setProperty('--x', Math.cos(angle) * distance + 'px');
+                    firework.style.setProperty('--y', Math.sin(angle) * distance + 'px');
+                    
+                    fireworksContainer.appendChild(firework);
+
+                    setTimeout(() => firework.remove(), 1000);
+                }, i * 50);
+            }
+        }
+
+        function playApplause() {
+            // Create applause and celebration sounds using Web Audio API
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Applause simulation
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const bufferSize = audioContext.sampleRate * 0.1;
+                    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    
+                    for (let j = 0; j < bufferSize; j++) {
+                        data[j] = (Math.random() * 2 - 1) * Math.exp(-j / (bufferSize * 0.3));
+                    }
+                    
+                    const source = audioContext.createBufferSource();
+                    source.buffer = buffer;
+                    
+                    const gainNode = audioContext.createGain();
+                    gainNode.gain.value = 0.1;
+                    
+                    source.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    source.start();
+                }, i * 100);
+            }
+
+            // Victory chime
+            setTimeout(() => {
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, index) => {
+                    setTimeout(() => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.frequency.value = freq;
+                        oscillator.type = 'sine';
+                        
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                        
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.5);
+                    }, index * 150);
+                });
+            }, 500);
+        }
+
+        function speakMessage() {
+            const message = "أهلا وسهلا بكم في معرض اختبار بيرْلْز";
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.lang = 'ar-SA';
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+            
+            setTimeout(() => {
+                speechSynthesis.speak(utterance);
+            }, 1000);
+        }
+
+        function resetGame() {
+            document.getElementById('celebration').classList.remove('active');
+            document.getElementById('wrongAnswer').classList.remove('active');
+            document.getElementById('dropZone').innerHTML = '<span style="color: #a0aec0; font-size: 18px;">اسحب الكلمات هنا</span>';
+            initGame();
+        }
+
+        // Initialize game on load
+        initGame();
+    </script>
+</body>
+</html>
